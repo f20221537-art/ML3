@@ -1,0 +1,15 @@
+.stApp {
+    background-color: #0e1117;
+}
+
+h1 {
+    color: #ff4b4b;
+    font-family: 'Helvetica Neue', sans-serif;
+}
+
+.stButton>button {
+    width: 100%;
+    border-radius: 20px;
+    background-color: #ff4b4b;
+    color: white;
+}
