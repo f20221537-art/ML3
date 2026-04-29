@@ -1,17 +1,16 @@
-import librosa
-import numpy as np
-
 def identify_instruments(audio_file):
-    # In a real scenario, you would:
-    # 1. Load audio with librosa.load()
-    # 2. Extract Mel-spectrograms or MFCCs
-    # 3. Pass segments through a pre-trained classifier
-    
-    # Placeholder data structure for the UI
-    data = [
-        {"Instrument": "Acoustic Guitar", "Start (s)": 0, "End (s)": 15},
-        {"Instrument": "Drums", "Start (s)": 10, "End (s)": 45},
-        {"Instrument": "Piano", "Start (s)": 20, "End (s)": 35},
-        {"Instrument": "Electric Bass", "Start (s)": 10, "End (s)": 50},
+    """
+    Simulates a model that detects multiple segments for the same instrument.
+    In a real app, this would use a sliding window over the Spectrogram.
+    """
+    # Logic: One instrument (e.g., 'Guitar') has multiple start/end entries.
+    segments = [
+        {"Instrument": "Drums", "Start": 0, "End": 60},
+        {"Instrument": "Electric Guitar", "Start": 5, "End": 15},
+        {"Instrument": "Electric Guitar", "Start": 40, "End": 55},  # Second appearance
+        {"Instrument": "Piano", "Start": 10, "End": 30},
+        {"Instrument": "Piano", "Start": 50, "End": 60},           # Second appearance
+        {"Instrument": "Synthesizer", "Start": 25, "End": 45},
+        {"Instrument": "Vocals", "Start": 12, "End": 58}
     ]
-    return data
+    return segments
