@@ -1,46 +1,72 @@
 import streamlit as st
 import pandas as pd
-import time
+import altair as alt
 from processing import identify_instruments
 
-st.set_page_config(page_title="Audio Lens", layout="wide")
+# Page Config
+st.set_page_config(page_title="SonicTrace AI", layout="wide", initial_sidebar_state="expanded")
 
-# Load Custom CSS
-with open("style.css") as f:
-    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+# Custom CSS for a sleek "Studio" look
+st.markdown("""
+    <style>
+    .main { background-color: #0b0d10; }
+    .stMetric { background-color: #161b22; padding: 15px; border-radius: 10px; border: 1px solid #30363d; }
+    .stAudio { margin-bottom: 2rem; }
+    h1, h2, h3 { color: #58a6ff !important; font-family: 'Inter', sans-serif; }
+    .stButton>button {
+        background: linear-gradient(45deg, #238636, #2ea043);
+        color: white; border: none; padding: 10px 24px; border-radius: 8px; font-weight: bold;
+        transition: 0.3s; width: 100%;
+    }
+    .stButton>button:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(46, 160, 67, 0.4); }
+    </style>
+    """, unsafe_allow_html=True)
 
-st.title("🎵 Audio Lens: Instrument Tracker")
-st.markdown("Upload a track to see a breakdown of instruments and their timestamps.")
+with st.sidebar:
+    st.title("🎙️ Controls")
+    uploaded_file = st.file_uploader("Upload Master Track", type=["mp3", "wav", "flac"])
+    sensitivity = st.slider("Detection Sensitivity", 0.0, 1.0, 0.5)
+    st.info("Higher sensitivity may detect quieter background instruments.")
 
-uploaded_file = st.file_uploader("Choose an audio file (MP3, WAV)", type=["mp3", "wav"])
+st.title("SonicTrace: Multi-Instrument Timeline")
 
-if uploaded_file is not None:
-    st.audio(uploaded_file, format='audio/wav')
+if uploaded_file:
+    # Top Row: Player and Summary
+    col_a, col_b = st.columns([2, 1])
+    with col_a:
+        st.audio(uploaded_file)
     
-    if st.button("Analyze Track"):
-        with st.spinner("Analyzing frequencies and temporal patterns..."):
-            # Mocking the processing delay
+    if st.button("Start AI Decomposition"):
+        with st.spinner("Isolating stems and mapping temporal features..."):
+            # Fetch data from processing logic
             results = identify_instruments(uploaded_file)
+            df = pd.DataFrame(results)
             
-            st.success("Analysis Complete!")
+            # Summary Metrics
+            with col_b:
+                st.metric("Instruments Found", len(df['Instrument'].unique()))
+
+            st.divider()
+
+            # Main View: The Timeline Chart
+            st.subheader("Instrument Activity Map")
             
-            # Layout for Results
-            col1, col2 = st.columns([1, 2])
-            
-            with col1:
-                st.subheader("Detected Instruments")
-                df = pd.DataFrame(results)
-                st.dataframe(df, use_container_width=True)
-            
-            with col2:
-                st.subheader("Timeline Visualization")
-                # Creating a horizontal bar chart for timestamps
-                st.vega_lite_chart(df, {
-                    'mark': 'bar',
-                    'encoding': {
-                        'x': {'field': 'Start (s)', 'type': 'quantitative'},
-                        'x2': {'field': 'End (s)'},
-                        'y': {'field': 'Instrument', 'type': 'nominal'},
-                        'color': {'field': 'Instrument', 'type': 'nominal'}
-                    }
-                }, use_container_width=True)
+            # Altair Chart: Handles multiple segments for the same instrument
+            chart = alt.Chart(df).mark_bar(
+                cornerRadius=5,
+                height=20
+            ).encode(
+                x=alt.X('Start:Q', title='Time (seconds)'),
+                x2='End:Q',
+                y=alt.Y('Instrument:N', sort='-x', title=None),
+                color=alt.Color('Instrument:N', scale=alt.Scale(scheme='tableau20'), legend=None),
+                tooltip=['Instrument', 'Start', 'End']
+            ).properties(height=400).interactive()
+
+            st.altair_chart(chart, use_container_width=True)
+
+            # Detailed Breakdown Table
+            with st.expander("See Raw Timestamp Data"):
+                st.table(df.sort_values(by='Start'))
+else:
+    st.warning("Please upload an audio file in the sidebar to begin.")
